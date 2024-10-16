@@ -1,20 +1,19 @@
 <?php
+// Include database connection
 include 'db_connect.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Capture form data
     $name = $_POST['name'];
     $email = $_POST['email'];
 
-    // Insert into the database
-    $stmt = $pdo->prepare('INSERT INTO leads (name, email) VALUES (?, ?)');
-    $stmt->execute([$name, $email]);
+    // Prepare SQL query
+    $sql = "INSERT INTO leads (name, email) VALUES (:name, :email)";
+    $stmt = $pdo->prepare($sql);
 
-    echo "Lead captured successfully!";
+    // Bind parameters and execute the query
+    $stmt->execute(['name' => $name, 'email' => $email]);
+
+    echo "Lead added successfully!";
 }
 ?>
-
-<form method="POST" action="lead_capture.php">
-    <input type="text" name="name" placeholder="Your Name" required>
-    <input type="email" name="email" placeholder="Your Email" required>
-    <button type="submit">Submit</button>
-</form>
