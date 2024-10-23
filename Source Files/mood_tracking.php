@@ -38,7 +38,14 @@ $moods = $stmt->fetchAll();
 <div class="chart-container">
     <canvas id="moodChart"></canvas>
 </div>
+<!-- Back Button -->
+<button onclick="goBack()">Go Back</button>
 
+<script>
+function goBack() {
+    window.history.back();
+}
+</script>
 <script>
     // Prepare the mood data for the chart
     const moodData = <?php echo json_encode($moods); ?>;
