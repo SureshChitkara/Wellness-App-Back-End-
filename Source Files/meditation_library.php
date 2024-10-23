@@ -1,6 +1,23 @@
-<?php
+<?php 
 // Include the database connection
 include 'db_connect.php';
+
+// Pagination setup
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$tracks_per_page = 5;
+$offset = ($page - 1) * $tracks_per_page;
+
+// Fetch meditation tracks with pagination
+$stmt = $pdo->prepare('SELECT * FROM meditation_tracks LIMIT :limit OFFSET :offset');
+$stmt->bindValue(':limit', $tracks_per_page, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+$tracks = $stmt->fetchAll();
+
+// Count total meditation tracks for pagination
+$total_tracks_stmt = $pdo->query('SELECT COUNT(*) FROM meditation_tracks');
+$total_tracks = $total_tracks_stmt->fetchColumn();
+$total_pages = ceil($total_tracks / $tracks_per_page);
 ?>
 
 <!DOCTYPE html>
@@ -36,9 +53,34 @@ include 'db_connect.php';
             width: 100%;
             margin-top: 10px;
         }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination a {
+            text-decoration: none;
+            color: #9c28c2;
+            padding: 10px;
+            margin: 0 5px;
+            border: 1px solid #9c28c2;
+            border-radius: 5px;
+        }
+        .pagination a:hover {
+            background-color: #9c28c2;
+            color: white;
+        }
     </style>
 </head>
 <body>
+
+<!-- Back Button -->
+<button onclick="goBack()">Go Back</button>
+
+<script>
+function goBack() {
+    window.history.back();
+}
+</script>
 
 <header>
     <h1>Meditation Library</h1>
@@ -47,10 +89,6 @@ include 'db_connect.php';
 
 <div class="container">
     <?php
-    // Fetch meditation tracks from the database
-    $stmt = $pdo->query('SELECT * FROM meditation_tracks');
-    $tracks = $stmt->fetchAll();
-
     // Check if there are any tracks
     if (count($tracks) > 0) {
         foreach ($tracks as $track) {
@@ -65,6 +103,17 @@ include 'db_connect.php';
         echo "<p>No meditation tracks available at the moment. Please check back later.</p>";
     }
     ?>
+    
+    <!-- Pagination -->
+    <div class="pagination">
+        <?php if ($page > 1): ?>
+            <a href="?page=<?php echo $page - 1; ?>">&laquo; Previous</a>
+        <?php endif; ?>
+
+        <?php if ($page < $total_pages): ?>
+            <a href="?page=<?php echo $page + 1; ?>">Next &raquo;</a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <footer>
@@ -73,11 +122,3 @@ include 'db_connect.php';
 
 </body>
 </html>
-CREATE TABLE moods (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,  -- Assuming you have user management in place
-    mood_level INT,  -- A number representing the mood (e.g., 1-10)
-    mood_description VARCHAR(255),  -- Optional description of the mood
-    track_id INT,  -- Track the meditation track influencing mood
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
