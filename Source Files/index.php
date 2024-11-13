@@ -2,20 +2,32 @@
 session_start();
 include 'db_connect.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = $_POST['name'];
-    $email = $_POST['email'];
+$message = '';
 
-    $stmt = $pdo->prepare('SELECT * FROM leads WHERE name = :name AND email = :email');
-    $stmt->execute(['name' => $name, 'email' => $email]);
+// Process the form submission for registration or login
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+
+    // Check if user exists in the leads table
+    $stmt = $pdo->prepare('SELECT * FROM leads WHERE email = :email');
+    $stmt->execute(['email' => $email]);
     $user = $stmt->fetch();
 
     if ($user) {
+        // Login existing user
         $_SESSION['user_id'] = $user['id'];
-        header('Location: index.php');
+        $message = "Welcome back, " . htmlspecialchars($user['name']) . "!";
+        header("Location: index.php");
         exit();
     } else {
-        echo "<p>Invalid name or email. Please try again.</p>";
+        // Register new user
+        $stmt = $pdo->prepare('INSERT INTO leads (name, email) VALUES (:name, :email)');
+        $stmt->execute(['name' => $name, 'email' => $email]);
+        $_SESSION['user_id'] = $pdo->lastInsertId();
+        $message = "Registration successful! Welcome, " . htmlspecialchars($name) . "!";
+        header("Location: index.php");
+        exit();
     }
 }
 ?>
@@ -71,8 +83,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="container">
 
+    <?php if (isset($message)): ?>
+        <p><?php echo htmlspecialchars($message); ?></p>
+    <?php endif; ?>
+
     <?php if (!isset($_SESSION['user_id'])): ?>
-    <!-- Login Form -->
+    <!-- Login and Registration Form -->
     <div class="login-form">
         <h2>Log in or Join Our Wellness Community</h2>
         <form method="POST" action="">
@@ -119,11 +135,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2>Explore Our Features</h2>
         <ul>
             <li><a href="meditation_library.php">Meditation Library</a></li>
-            <li><a href="add_meditation.php">Add Track (WIP)me</a></li>
             <li><a href="mood_tracking.php">Mood Tracking</a></li>
             <li><a href="virtual_therapy.php">Virtual Therapy</a></li>
             <li><a href="therapists.php">Add a Therapist</a></li>
-
         </ul>
     </div>
 </div>
