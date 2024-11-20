@@ -9,29 +9,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
 
-    // Check if user exists in the leads table
-    $stmt = $pdo->prepare('SELECT * FROM leads WHERE email = :email');
-    $stmt->execute(['email' => $email]);
-    $user = $stmt->fetch();
+    try {
+        // Check if the user already exists in the leads table
+        $stmt = $pdo->prepare('SELECT * FROM leads WHERE email = :email');
+        $stmt->execute(['email' => $email]);
+        $user = $stmt->fetch();
 
-    if ($user) {
-        // Login existing user
-        $_SESSION['user_id'] = $user['id'];
-        $message = "Welcome back, " . htmlspecialchars($user['name']) . "!";
-        header("Location: index.php");
-        exit();
-    } else {
-        // Register new user
-        $stmt = $pdo->prepare('INSERT INTO leads (name, email) VALUES (:name, :email)');
-        $stmt->execute(['name' => $name, 'email' => $email]);
-        $_SESSION['user_id'] = $pdo->lastInsertId();
-        $message = "Registration successful! Welcome, " . htmlspecialchars($name) . "!";
-        header("Location: index.php");
-        exit();
+        if ($user) {
+            // Login the existing user
+            $_SESSION['user_id'] = $user['id'];
+            $message = "Welcome back, " . htmlspecialchars($user['name']) . "!";
+        } else {
+            // Register a new user
+            $stmt = $pdo->prepare('INSERT INTO leads (name, email) VALUES (:name, :email)');
+            $stmt->execute(['name' => $name, 'email' => $email]);
+            $_SESSION['user_id'] = $pdo->lastInsertId();
+            $message = "Registration successful! Welcome, " . htmlspecialchars($name) . "!";
+        }
+    } catch (PDOException $e) {
+        $message = "An error occurred: " . htmlspecialchars($e->getMessage());
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -83,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="container">
 
-    <?php if (isset($message)): ?>
+    <?php if (!empty($message)): ?>
         <p><?php echo htmlspecialchars($message); ?></p>
     <?php endif; ?>
 
