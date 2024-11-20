@@ -18,12 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $profile_picture = ''; // Optional: Set a default image path or handle file uploads
 
     // Insert therapist into the database
-    $stmt = $pdo->prepare("INSERT INTO therapists (name, specialty, bio, profile_picture) VALUES (:name, :specialty, :bio, :profile_picture)");
+    $stmt = $pdo->prepare("INSERT INTO therapists (name, specialty, bio) VALUES (:name, :specialty, :bio)");
     $stmt->execute([
         'name' => $name,
         'specialty' => $specialty,
         'bio' => $bio,
-        'profile_picture' => $profile_picture
     ]);
 
     // Confirmation message
